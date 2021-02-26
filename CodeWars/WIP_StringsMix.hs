@@ -6,6 +6,8 @@ import Data.Char (isLower)
 import qualified Data.Map
 import Control.Applicative ( Applicative(liftA2) )
 
+data Smix k v = LeftSmix k v | RightSmix k v | EqSmix | SkipSmix
+
 charCountMap :: String -> Data.Map.Map Char Integer
 charCountMap s = Data.Map.fromListWith (+) $ liftA2 (,) s [1]
 
