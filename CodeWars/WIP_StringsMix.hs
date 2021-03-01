@@ -2,7 +2,6 @@
 
 -- module Codewars.G964.Mixin where
 
-import Data.Maybe (catMaybes)
 import Data.List (sortBy, intercalate)
 import Data.Char (isLower)
 import qualified Data.Map.Strict as Map
@@ -12,9 +11,9 @@ import Control.Applicative
 data Smix = LeftSmix | RightSmix | EqSmix
 
 showSmix :: (Smix, (Char,Int)) -> String
-showSmix (LeftSmix, (k,v)) = "1:" ++ (replicate v k)
-showSmix (RightSmix, (k,v)) = "2:" ++ (replicate v k)
-showSmix (EqSmix, (k,v)) = "=:" ++ (replicate v k)
+showSmix (LeftSmix, (k,v)) = "1:" ++ replicate v k
+showSmix (RightSmix, (k,v)) = "2:" ++ replicate v k
+showSmix (EqSmix, (k,v)) = "=:" ++ replicate v k
 
 charCountMap :: String -> Map.Map Char Int
 charCountMap s = Map.fromListWith (+) $ liftA2 (,) s [1]
@@ -36,20 +35,30 @@ dealWithBoth k x y
     | x < y = Just (RightSmix, (k, y))
 
 smixOrdering :: (Smix, (Char, Int)) -> (Smix, (Char, Int)) -> Ordering
---TODO we should just partition by value, partition by smix, then sort by char
-smixOrdering (_,(k1, v1)) (_,(k2, v2))
-    | v1 < v2 = GT
-    | v1 > v2 = LT
-    | k1 < k2 = LT
-    | k1 > k2 = GT
-    | otherwise = EQ
+smixOrdering (LeftSmix, _) (RightSmix, _) = LT
+smixOrdering (LeftSmix, _) (EqSmix, _) = LT
+smixOrdering (RightSmix, _) (EqSmix, _) = LT
+smixOrdering (RightSmix, _) (LeftSmix, _) = GT
+smixOrdering (EqSmix, _) (LeftSmix, _) = GT 
+smixOrdering (EqSmix, _) (RightSmix, _) = GT
+smixOrdering (_,(k1, _)) (_,(k2, _)) = compare k1 k2
+
+generalOrdering :: (Smix, (Char, Int)) -> (Smix, (Char, Int)) -> Ordering
+generalOrdering l@(_, (_, v1)) r@(_, (_,v2))
+    | v1 == v2 = smixOrdering l r
+    | otherwise = compare v2 v1
 
 mix :: String -> String -> String
-mix s1 s2 = intercalate "/" $ showSmix  <$> result
+mix s1 s2 = intercalate "/" (showSmix <$> sortedBySmix)
+    where 
+        sortedBySmix = sortBy generalOrdering (smix s1 s2)
+
+smix :: String -> String -> [(Smix, (Char, Int))]
+smix s1 s2 = result
     where countMapLeft = charCountMap $ filter isLower s1
           countMapRight = charCountMap $ filter isLower s2
           mergeMap = Merge.merge (Merge.mapMaybeMissing (dealWith False))
                                  (Merge.mapMaybeMissing (dealWith True))
                                  (Merge.zipWithMaybeMatched dealWithBoth)
                                  countMapLeft countMapRight
-          result = sortBy smixOrdering $ fmap snd $ Map.toList mergeMap
+          result = snd <$> Map.toList mergeMap
