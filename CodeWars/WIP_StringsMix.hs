@@ -9,6 +9,7 @@ import qualified Data.Map.Merge.Strict as Merge
 import Control.Applicative
 
 data Smix = LeftSmix | RightSmix | EqSmix
+    deriving (Eq, Ord)
 
 showSmix :: (Smix, (Char,Int)) -> String
 showSmix (LeftSmix, (k,v)) = "1:" ++ replicate v k
@@ -34,27 +35,15 @@ dealWithBoth k x y
     | x > y = Just (LeftSmix, (k, x))
     | x < y = Just (RightSmix, (k, y))
 
-smixOrdering :: (Smix, (Char, Int)) -> (Smix, (Char, Int)) -> Ordering
-smixOrdering (LeftSmix, _) (RightSmix, _) = LT
-smixOrdering (LeftSmix, _) (EqSmix, _) = LT
-smixOrdering (RightSmix, _) (EqSmix, _) = LT
-smixOrdering (RightSmix, _) (LeftSmix, _) = GT
-smixOrdering (EqSmix, _) (LeftSmix, _) = GT 
-smixOrdering (EqSmix, _) (RightSmix, _) = GT
-smixOrdering (_,(k1, _)) (_,(k2, _)) = compare k1 k2
-
 generalOrdering :: (Smix, (Char, Int)) -> (Smix, (Char, Int)) -> Ordering
-generalOrdering l@(_, (_, v1)) r@(_, (_,v2))
-    | v1 == v2 = smixOrdering l r
+generalOrdering l@(ls, (k1, v1)) r@(rs, (k2,v2))
+    | v1 == v2 = case compare ls rs of
+                    EQ -> compare k1 k2
+                    _ -> compare ls rs
     | otherwise = compare v2 v1
 
 mix :: String -> String -> String
 mix s1 s2 = intercalate "/" (showSmix <$> sortedBySmix)
-    where 
-        sortedBySmix = sortBy generalOrdering (smix s1 s2)
-
-smix :: String -> String -> [(Smix, (Char, Int))]
-smix s1 s2 = result
     where countMapLeft = charCountMap $ filter isLower s1
           countMapRight = charCountMap $ filter isLower s2
           mergeMap = Merge.merge (Merge.mapMaybeMissing (dealWith False))
@@ -62,3 +51,4 @@ smix s1 s2 = result
                                  (Merge.zipWithMaybeMatched dealWithBoth)
                                  countMapLeft countMapRight
           result = snd <$> Map.toList mergeMap
+          sortedBySmix = sortBy generalOrdering result
