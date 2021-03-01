@@ -1,7 +1,5 @@
 -- https://www.codewars.com/kata/5629db57620258aa9d000014/train/haskell
-
 -- module Codewars.G964.Mixin where
-
 import Data.List (sortBy, intercalate)
 import Data.Char (isLower)
 import qualified Data.Map.Strict as Map
@@ -19,7 +17,7 @@ showSmix (EqSmix, (k,v)) = "=:" ++ replicate v k
 charCountMap :: String -> Map.Map Char Int
 charCountMap s = Map.fromListWith (+) $ liftA2 (,) s [1]
 
---Merge handling and dropping 1s
+--Partial apply invert for left or right smix constructor for left/right miss mapping merge strategy
 dealWith :: Bool -> Char -> Int -> (Smix, (Char, Int))
 dealWith invert k x
     | invert = (RightSmix, (k,x))
