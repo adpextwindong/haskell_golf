@@ -3,12 +3,11 @@ module Bob (responseFor) where
 import Data.Char
 
 responseFor :: String -> String
-responseFor [] = "Fine. Be that way!"
 responseFor s
+    | pSilence = "Fine. Be that way!"
     | pYell alphaOnly && not (null alphaOnly) = if pQuestion s
                      then "Calm down, I know what I'm doing!"
                      else "Whoa, chill out!"
-    | pSilence = "Fine. Be that way!"
     | pQuestion s = "Sure."
     | otherwise = "Whatever."
   where
