@@ -1,3 +1,0 @@
-Resources:
-
-http://maizure.org/projects/decoded-gnu-coreutils/
